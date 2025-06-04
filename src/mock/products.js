@@ -1,3 +1,9 @@
+// mock/products.js
+// Este archivo ya no será la fuente principal de productos,
+// sino que los productos se cargarán desde el backend.
+// Lo mantengo para que el código compile si hay alguna referencia inicial,
+// pero su contenido será ignorado una vez que el backend esté conectado.
+
 const initialProducts = [
   {
     id: 1,

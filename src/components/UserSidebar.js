@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const UserSidebar = ({ isOpen, onClose, onNavigate, notificationsCount, currentUser, onUpdateUserShipping }) => {
   const [showShippingForm, setShowShippingForm] = useState(false);
@@ -6,7 +6,8 @@ const UserSidebar = ({ isOpen, onClose, onNavigate, notificationsCount, currentU
     address: '', city: '', state: '', postalCode: '', phone: ''
   });
 
-  useState(() => {
+  // Sincronizar la dirección de envío si el currentUser cambia
+  useEffect(() => {
     if (currentUser?.shippingAddress) {
       setShippingAddress(currentUser.shippingAddress);
     } else {
@@ -39,6 +40,14 @@ const UserSidebar = ({ isOpen, onClose, onNavigate, notificationsCount, currentU
         </button>
       </div>
       <ul className="py-2 sm:py-4 space-y-1 sm:space-y-2">
+        <li>
+          <button onClick={() => onNavigate('catalog')} className="flex items-center w-full p-2 sm:p-3 text-gray-700 hover:bg-gray-100 rounded-lg text-sm">
+            <svg className="w-5 h-5 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l7 7 7-7M19 10v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h.01" />
+            </svg>
+            Inicio
+          </button>
+        </li>
         <li>
           <button onClick={() => onNavigate('notifications')} className="flex items-center w-full p-2 sm:p-3 text-gray-700 hover:bg-gray-100 rounded-lg text-sm">
             <svg className="w-5 h-5 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

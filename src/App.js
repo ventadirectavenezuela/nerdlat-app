@@ -3,9 +3,9 @@ import LayoutHeader from './components/LayoutHeader';
 import LayoutFooter from './components/LayoutFooter';
 import AdminDashboard from './components/AdminDashboard';
 import UserHome from './components/UserHome';
-import UserLogin from './components/UserLogin'; // Importar UserLogin
-import UserRegister from './components/UserRegister'; // Importar UserRegister
-import ForgotPasswordModal from './components/ForgotPasswordModal'; // Importar ForgotPasswordModal
+import UserLogin from './components/UserLogin';
+import UserRegister from './components/UserRegister';
+import ForgotPasswordModal from './components/ForgotPasswordModal';
 import initialProducts from './mock/products';
 import initialUsers from './mock/users';
 import Auth from './utils/auth';
@@ -16,7 +16,8 @@ const App = () => {
   const [users, setUsers] = useState(initialUsers);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // Estado para el modal de olvido de contraseña
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState('home'); // Cambiado a 'home' por defecto
 
   useEffect(() => {
     const savedProducts = JSON.parse(localStorage.getItem('products'));
@@ -30,6 +31,7 @@ const App = () => {
       const fullUser = users.find(u => u.id === storedUser.id);
       if (fullUser) {
         setCurrentUser(fullUser);
+        setCurrentPage('home');
       } else {
         Auth.logout();
       }
@@ -40,11 +42,13 @@ const App = () => {
     setCurrentUser(user);
     setShowLoginModal(false);
     setShowRegisterModal(false);
+    setCurrentPage('home');
   };
 
   const handleLogout = () => {
     Auth.logout();
     setCurrentUser(null);
+    setCurrentPage('home'); // Al cerrar sesión, volver a la vista principal de usuario
   };
 
   const handleUpdateUser = (updatedUser) => {
@@ -77,6 +81,10 @@ const App = () => {
     localStorage.setItem('products', JSON.stringify(updatedProducts));
   };
 
+  const handleGoHome = () => {
+    setCurrentPage('home');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <LayoutHeader 
@@ -85,9 +93,10 @@ const App = () => {
         onLoginClick={() => setShowLoginModal(true)}
         onRegisterClick={() => setShowRegisterModal(true)}
         onLogout={handleLogout}
+        onGoHome={handleGoHome}
       />
       
-      <main className="flex-grow py-8">
+      <main className="flex-grow">
         {currentUser && currentUser.rol === 'Administrador' ? (
           <AdminDashboard 
             products={products}
@@ -105,14 +114,16 @@ const App = () => {
             onLogin={handleLogin}
             onLogout={handleLogout}
             onUpdateUser={handleUpdateUser}
-            // Ya no pasamos showLoginModal, setShowLoginModal, etc. a UserHome
+            showLoginModal={showLoginModal}
+            setShowLoginModal={setShowLoginModal}
+            showRegisterModal={showRegisterModal}
+            setShowRegisterModal={setShowRegisterModal}
           />
         )}
       </main>
 
       <LayoutFooter />
 
-      {/* Modales de Login, Registro y Olvidé Contraseña - Renderizados directamente en App.js */}
       {showLoginModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <UserLogin 
@@ -127,7 +138,7 @@ const App = () => {
       {showRegisterModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <UserRegister 
-            onRegister={handleLogin} // Al registrarse, también se inicia sesión
+            onRegister={handleLogin} 
             onClose={() => setShowRegisterModal(false)} 
             onGoToLogin={() => { setShowRegisterModal(false); setShowLoginModal(true); }} 
           />
@@ -146,3 +157,5 @@ const App = () => {
 };
 
 export default App;
+
+// DONE

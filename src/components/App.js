@@ -3,6 +3,9 @@ import LayoutHeader from './components/LayoutHeader';
 import LayoutFooter from './components/LayoutFooter';
 import AdminDashboard from './components/AdminDashboard';
 import UserHome from './components/UserHome';
+import UserLogin from './components/UserLogin';
+import UserRegister from './components/UserRegister';
+import ForgotPasswordModal from './components/ForgotPasswordModal';
 import initialProducts from './mock/products';
 import initialUsers from './mock/users';
 import Auth from './utils/auth';
@@ -11,8 +14,10 @@ const App = () => {
   const [products, setProducts] = useState(initialProducts);
   const [currentUser, setCurrentUser] = useState(null);
   const [users, setUsers] = useState(initialUsers);
-  const [showLoginModal, setShowLoginModal] = useState(false); // Estado para controlar el modal de login
-  const [showRegisterModal, setShowRegisterModal] = useState(false); // Estado para controlar el modal de registro
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [currentMainView, setCurrentMainView] = useState('home'); // Controla la vista principal (home, admin)
 
   useEffect(() => {
     const savedProducts = JSON.parse(localStorage.getItem('products'));
@@ -26,21 +31,24 @@ const App = () => {
       const fullUser = users.find(u => u.id === storedUser.id);
       if (fullUser) {
         setCurrentUser(fullUser);
+        setCurrentMainView(fullUser.rol === 'Administrador' ? 'admin' : 'home');
       } else {
         Auth.logout();
       }
     }
-  }, [users]); // Añadido users como dependencia para que el useEffect se ejecute cuando users esté cargado
+  }, [users]);
 
   const handleLogin = (user) => {
     setCurrentUser(user);
-    setShowLoginModal(false); // Cerrar modal al loguearse
-    setShowRegisterModal(false); // Asegurarse que el de registro esté cerrado
+    setShowLoginModal(false);
+    setShowRegisterModal(false);
+    setCurrentMainView(user.rol === 'Administrador' ? 'admin' : 'home');
   };
 
   const handleLogout = () => {
     Auth.logout();
     setCurrentUser(null);
+    setCurrentMainView('home'); // Al cerrar sesión, volver a la vista principal de usuario
   };
 
   const handleUpdateUser = (updatedUser) => {
@@ -73,6 +81,10 @@ const App = () => {
     localStorage.setItem('products', JSON.stringify(updatedProducts));
   };
 
+  const handleGoHome = () => {
+    setCurrentMainView('home'); // Función para que el logo lleve a la vista principal de usuario
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <LayoutHeader 
@@ -81,10 +93,11 @@ const App = () => {
         onLoginClick={() => setShowLoginModal(true)}
         onRegisterClick={() => setShowRegisterModal(true)}
         onLogout={handleLogout}
+        onGoHome={handleGoHome} // Pasar la función para ir a Home
       />
       
-      <main className="flex-grow py-8">
-        {currentUser && currentUser.rol === 'Administrador' ? (
+      <main className="flex-grow">
+        {currentMainView === 'admin' ? (
           <AdminDashboard 
             products={products}
             admin={currentUser}
@@ -110,6 +123,35 @@ const App = () => {
       </main>
 
       <LayoutFooter />
+
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <UserLogin 
+            onLogin={handleLogin} 
+            onClose={() => setShowLoginModal(false)} 
+            onGoToRegister={() => { setShowLoginModal(false); setShowRegisterModal(true); }} 
+            onForgotPassword={() => { setShowLoginModal(false); setShowForgotPasswordModal(true); }}
+          />
+        </div>
+      )}
+
+      {showRegisterModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <UserRegister 
+            onRegister={handleLogin} 
+            onClose={() => setShowRegisterModal(false)} 
+            onGoToLogin={() => { setShowRegisterModal(false); setShowLoginModal(true); }} 
+          />
+        </div>
+      )}
+
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <ForgotPasswordModal 
+            onClose={() => setShowForgotPasswordModal(false)} 
+          />
+        </div>
+      )}
     </div>
   );
 };

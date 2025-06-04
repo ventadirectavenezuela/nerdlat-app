@@ -1,24 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductGrid from './ProductGrid';
 import CartSidebar from './CartSidebar';
 import PaymentConfirmationForm from './PaymentConfirmationForm';
+import UserLogin from './UserLogin';
+import UserRegister from './UserRegister';
 import SearchBar from './SearchBar';
 import QuickFilters from './QuickFilters';
 import UserSidebar from './UserSidebar';
-import ProductDetailModal from './ProductDetailModal'; // Importar el modal de detalle
+import ForgotPasswordModal from './ForgotPasswordModal';
 
-const UserHome = ({ products, onLogin, currentUser, onLogout, onUpdateUser }) => {
-  const [cart, setCart] = useState([]);
-  const [favorites, setFavorites] = useState([]);
+const UserHome = ({ products, onLogin, currentUser, onLogout, onUpdateUser, showLoginModal, setShowLoginModal, showRegisterModal, setShowRegisterModal }) => {
+  const [cart, setCart] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('userCart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (error) {
+      console.error("Error al cargar el carrito de localStorage:", error);
+      return [];
+    }
+  });
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const savedFavorites = localStorage.getItem('userFavorites');
+      return savedFavorites ? JSON.parse(savedFavorites) : [];
+    } catch (error) {
+      console.error("Error al cargar favoritos de localStorage:", error);
+      return [];
+    }
+  });
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [notificationsCount, setNotificationsCount] = useState(3);
   const [currentViewInHome, setCurrentViewInHome] = useState('catalog');
-  const [selectedProduct, setSelectedProduct] = useState(null); // Estado para el producto seleccionado
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  useState(() => {
+  useEffect(() => {
+    try {
+      localStorage.setItem('userCart', JSON.stringify(cart));
+    } catch (error) {
+      console.error("Error al guardar el carrito en localStorage:", error);
+    }
+  }, [cart]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('userFavorites', JSON.stringify(favorites));
+    } catch (error) {
+      console.error("Error al guardar favoritos en localStorage:", error);
+    }
+  }, [favorites]);
+
+  useEffect(() => {
     setFilteredProducts(products);
   }, [products]);
 
@@ -66,7 +102,7 @@ const UserHome = ({ products, onLogin, currentUser, onLogout, onUpdateUser }) =>
 
   const handleCheckout = () => {
     if (!currentUser) {
-      alert('Por favor, inicia sesión o regístrate para continuar con la compra.');
+      setShowLoginModal(true); 
       return;
     }
     setShowPaymentConfirmation(true);
@@ -77,7 +113,7 @@ const UserHome = ({ products, onLogin, currentUser, onLogout, onUpdateUser }) =>
     alert('¡Información de pago y envío recibida! Tu pedido será validado pronto.');
     console.log('Datos de Pago:', paymentData);
     console.log('Datos de Envío:', shippingData);
-    setCart([]);
+    setCart([]); // Vaciar carrito después de la compra
     setShowPaymentConfirmation(false);
     setCurrentViewInHome('catalog');
   };
@@ -118,14 +154,28 @@ const UserHome = ({ products, onLogin, currentUser, onLogout, onUpdateUser }) =>
       case 'catalog':
         return (
           <>
+            {/* Contenido de la Landing Page */}
+            <div className="flex flex-col items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white p-8 text-center rounded-lg shadow-lg mb-8">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 animate-fade-in-down">
+                Bienvenido a Venta Directa
+              </h2>
+              <p className="text-lg sm:text-xl md:text-2xl mb-6 animate-fade-in-up">
+                Tu tienda online de confianza. Compras fáciles y seguras.
+              </p>
+              {/* Botón "Explorar Ahora" eliminado */}
+            </div>
+
+            {/* Barra de búsqueda y filtros */}
             <SearchBar products={products} onSearch={handleSearch} />
             <QuickFilters products={products} onFilterChange={handleQuickFilter} />
+            
+            {/* Artículos de muestra / Catálogo completo */}
             <ProductGrid 
               products={filteredProducts} 
               onAddToCart={addToCart} 
               onToggleFavorite={toggleFavorite} 
-              favorites={favorites}
-              onProductClick={handleProductClick} // Pasar la función para abrir el modal
+              favorites={favorites} 
+              onProductClick={handleProductClick}
             />
           </>
         );
@@ -172,29 +222,11 @@ const UserHome = ({ products, onLogin, currentUser, onLogout, onUpdateUser }) =>
           </div>
         );
       case 'notifications':
-        return <h2 className="text-2xl font-bold mb-6">Mis Notificaciones (Simulado)</h2>;
+        return <h2 className="text-2xl font-bold mb-6">Mis Notificaciones</h2>;
       case 'my_purchases':
-        return (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-6">Mis Compras</h2>
-            <p className="text-gray-600 mb-4">Aquí verás tu historial de compras y el estado de tus envíos.</p>
-            <p className="text-gray-500 text-sm">
-              (Funcionalidad de seguimiento de envíos y gestión de devoluciones requiere integración con servicios externos y backend.)
-            </p>
-          </div>
-        );
+        return <h2 className="text-2xl font-bold mb-6">Mis Compras</h2>;
       case 'help':
-        return (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-6">Ayuda y Soporte</h2>
-            <p className="text-gray-600 mb-4">Encuentra respuestas a tus preguntas frecuentes o contacta a nuestro equipo.</p>
-            <ul className="list-disc list-inside text-blue-600 space-y-2">
-              <li><a href="#" className="hover:underline">Preguntas Frecuentes (FAQs)</a></li>
-              <li><a href="#" className="hover:underline">Contactar Soporte (Chat en vivo simulado)</a></li>
-              <li><a href="#" className="hover:underline">Políticas de Devolución</a></li>
-            </ul>
-          </div>
-        );
+        return <h2 className="text-2xl font-bold mb-6">Ayuda y Soporte</h2>;
       default:
         return null;
     }
@@ -202,8 +234,8 @@ const UserHome = ({ products, onLogin, currentUser, onLogout, onUpdateUser }) =>
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold hidden sm:block">Catálogo de Productos</h1>
+      {/* Eliminado el título "Catálogo de Productos" */}
+      <div className="flex justify-end items-center mb-8"> {/* Ajustado para que los botones queden a la derecha */}
         <div className="flex items-center space-x-2 sm:space-x-4 ml-auto">
           {/* Botón para abrir el sidebar */}
           {currentUser && (
@@ -266,3 +298,5 @@ const UserHome = ({ products, onLogin, currentUser, onLogout, onUpdateUser }) =>
 };
 
 export default UserHome;
+
+// DONE

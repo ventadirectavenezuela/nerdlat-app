@@ -4,18 +4,22 @@ const AUTH_KEYS = {
 };
 
 const Auth = {
-  // Simula la generación de un token simple
+  // Simula la generación de un token simple (ahora solo si el backend no lo envía)
   generateToken: (userId) => {
-    return `token-${userId}-${Date.now()}`;
+    return `fake-token-${userId}-${Date.now()}`;
   },
 
   // Guarda los datos del usuario y el token en localStorage
   login: (user, token) => {
     localStorage.setItem(AUTH_KEYS.USER_DATA, JSON.stringify({
       id: user.id,
-      nombre: user.nombre,
-      email: user.correo,
-      rol: user.rol
+      usuario: user.usuario,
+      nombre: user.name, // Usar 'name' como viene del backend
+      apellido: user.apellido || '', // Asegurarse de que exista
+      correo: user.email, // Usar 'email' como viene del backend
+      documento: user.documento || '', // Asegurarse de que exista
+      rol: user.role, // Usar 'role' como viene del backend
+      shippingAddress: user.shippingAddress // Guardar dirección de envío si existe
     }));
     localStorage.setItem(AUTH_KEYS.AUTH_TOKEN, token);
   },
@@ -44,3 +48,5 @@ const Auth = {
 };
 
 export default Auth;
+
+// DONE

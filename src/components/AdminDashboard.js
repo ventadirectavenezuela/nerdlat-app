@@ -1,20 +1,112 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminProductForm from './AdminProductForm';
 import ProductGrid from './ProductGrid';
 import AdminProfile from './AdminProfile';
 import AdminStats from './AdminStats';
 
 const AdminDashboard = ({ 
-  products, 
   admin,
-  onAddProduct, 
-  onUpdateProduct, 
-  onDeleteProduct,
   onUpdateAdmin,
   onLogout 
 }) => {
+  const [products, setProducts] = useState([]); // Ahora los productos se gestionan desde aquí
   const [isEditing, setIsEditing] = useState(null);
   const [activeTab, setActiveTab] = useState('products');
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [errorProducts, setErrorProducts] = useState('');
+
+  // Efecto para cargar los productos desde el backend al montar el componente
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoadingProducts(true);
+      setErrorProducts('');
+      try {
+        const response = await fetch('http://localhost:3000/api/products');
+        const data = await response.json();
+        if (response.ok) {
+          setProducts(data);
+        } else {
+          setErrorProducts(data.message || 'Error al cargar productos.');
+        }
+      } catch (err) {
+        setErrorProducts('No se pudo conectar con el servidor para cargar productos.');
+        console.error('Error de conexión:', err);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    fetchProducts();
+  }, []); // Se ejecuta solo una vez al montar
+
+  const handleAddProduct = async (newProduct) => {
+    try {
+      const response = await fetch('http://localhost:3000/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${Auth.getToken()}` // En un entorno real, enviar token de autenticación
+        },
+        body: JSON.stringify(newProduct),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setProducts(prev => [...prev, data.product]); // Añadir el producto devuelto por el backend
+        alert('Producto agregado exitosamente!');
+      } else {
+        alert(`Error al agregar producto: ${data.message || 'Desconocido'}`);
+      }
+    } catch (err) {
+      alert('Error de conexión al agregar producto.');
+      console.error('Error de conexión:', err);
+    }
+  };
+
+  const handleUpdateProduct = async (updatedProduct) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/products/${updatedProduct.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${Auth.getToken()}`
+        },
+        body: JSON.stringify(updatedProduct),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setProducts(prev => prev.map(p => p.id === updatedProduct.id ? data.product : p)); // Actualizar el producto
+        alert('Producto actualizado exitosamente!');
+      } else {
+        alert(`Error al actualizar producto: ${data.message || 'Desconocido'}`);
+      }
+    } catch (err) {
+      alert('Error de conexión al actualizar producto.');
+      console.error('Error de conexión:', err);
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+      return;
+    }
+    try {
+      const response = await fetch(`http://localhost:3000/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          // 'Authorization': `Bearer ${Auth.getToken()}`
+        },
+      });
+      if (response.ok) {
+        setProducts(prev => prev.filter(p => p.id !== productId)); // Eliminar de la lista
+        alert('Producto eliminado exitosamente!');
+      } else {
+        const data = await response.json();
+        alert(`Error al eliminar producto: ${data.message || 'Desconocido'}`);
+      }
+    } catch (err) {
+      alert('Error de conexión al eliminar producto.');
+      console.error('Error de conexión:', err);
+    }
+  };
 
   const handleEdit = (product) => {
     setIsEditing(product);
@@ -25,7 +117,7 @@ const AdminDashboard = ({
   };
 
   const handleSubmitEdit = (updatedProduct) => {
-    onUpdateProduct(updatedProduct);
+    handleUpdateProduct(updatedProduct);
     setIsEditing(null);
   };
 
@@ -78,19 +170,27 @@ const AdminDashboard = ({
                   </h2>
                   <AdminProductForm
                     product={isEditing}
-                    onSubmit={isEditing ? handleSubmitEdit : onAddProduct}
+                    onSubmit={isEditing ? handleSubmitEdit : handleAddProduct} // Usar handleAddProduct
                     onCancel={isEditing ? handleCancelEdit : null}
                   />
                 </div>
 
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Lista de Productos</h2>
-                  <ProductGrid
-                    products={products}
-                    showActions
-                    onEdit={handleEdit}
-                    onDelete={onDeleteProduct}
-                  />
+                  {loadingProducts ? (
+                    <p className="text-gray-600">Cargando productos...</p>
+                  ) : errorProducts ? (
+                    <p className="text-red-500">{errorProducts}</p>
+                  ) : products.length === 0 ? (
+                    <p className="text-gray-600">No hay productos. ¡Agrega el primero!</p>
+                  ) : (
+                    <ProductGrid
+                      products={products}
+                      showActions
+                      onEdit={handleEdit}
+                      onDelete={handleDeleteProduct} // Usar handleDeleteProduct
+                    />
+                  )}
                 </div>
               </div>
             </>
