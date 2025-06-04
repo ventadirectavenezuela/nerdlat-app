@@ -3,9 +3,6 @@ import LayoutHeader from './components/LayoutHeader';
 import LayoutFooter from './components/LayoutFooter';
 import AdminDashboard from './components/AdminDashboard';
 import UserHome from './components/UserHome';
-import UserLogin from './components/UserLogin'; // Importar UserLogin
-import UserRegister from './components/UserRegister'; // Importar UserRegister
-import ForgotPasswordModal from './components/ForgotPasswordModal'; // Importar ForgotPasswordModal
 import initialProducts from './mock/products';
 import initialUsers from './mock/users';
 import Auth from './utils/auth';
@@ -14,9 +11,8 @@ const App = () => {
   const [products, setProducts] = useState(initialProducts);
   const [currentUser, setCurrentUser] = useState(null);
   const [users, setUsers] = useState(initialUsers);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // Estado para el modal de olvido de contraseña
+  const [showLoginModal, setShowLoginModal] = useState(false); // Estado para controlar el modal de login
+  const [showRegisterModal, setShowRegisterModal] = useState(false); // Estado para controlar el modal de registro
 
   useEffect(() => {
     const savedProducts = JSON.parse(localStorage.getItem('products'));
@@ -34,12 +30,12 @@ const App = () => {
         Auth.logout();
       }
     }
-  }, [users]);
+  }, [users]); // Añadido users como dependencia para que el useEffect se ejecute cuando users esté cargado
 
   const handleLogin = (user) => {
     setCurrentUser(user);
-    setShowLoginModal(false);
-    setShowRegisterModal(false);
+    setShowLoginModal(false); // Cerrar modal al loguearse
+    setShowRegisterModal(false); // Asegurarse que el de registro esté cerrado
   };
 
   const handleLogout = () => {
@@ -105,44 +101,19 @@ const App = () => {
             onLogin={handleLogin}
             onLogout={handleLogout}
             onUpdateUser={handleUpdateUser}
-            // Ya no pasamos showLoginModal, setShowLoginModal, etc. a UserHome
+            showLoginModal={showLoginModal}
+            setShowLoginModal={setShowLoginModal}
+            showRegisterModal={showRegisterModal}
+            setShowRegisterModal={setShowRegisterModal}
           />
         )}
       </main>
 
       <LayoutFooter />
-
-      {/* Modales de Login, Registro y Olvidé Contraseña - Renderizados directamente en App.js */}
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <UserLogin 
-            onLogin={handleLogin} 
-            onClose={() => setShowLoginModal(false)} 
-            onGoToRegister={() => { setShowLoginModal(false); setShowRegisterModal(true); }} 
-            onForgotPassword={() => { setShowLoginModal(false); setShowForgotPasswordModal(true); }}
-          />
-        </div>
-      )}
-
-      {showRegisterModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <UserRegister 
-            onRegister={handleLogin} // Al registrarse, también se inicia sesión
-            onClose={() => setShowRegisterModal(false)} 
-            onGoToLogin={() => { setShowRegisterModal(false); setShowLoginModal(true); }} 
-          />
-        </div>
-      )}
-
-      {showForgotPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <ForgotPasswordModal 
-            onClose={() => setShowForgotPasswordModal(false)} 
-          />
-        </div>
-      )}
     </div>
   );
 };
 
 export default App;
+
+// DONE

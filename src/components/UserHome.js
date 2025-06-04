@@ -1,25 +1,22 @@
 import React, { useState } from 'react';
 import ProductGrid from './ProductGrid';
 import CartSidebar from './CartSidebar';
-import CheckoutForm from './CheckoutForm'; // Este es el formulario de envío original
-import PaymentConfirmationForm from './PaymentConfirmationForm'; // Importar el nuevo formulario
-import UserLogin from './UserLogin';
-import UserRegister from './UserRegister';
+import PaymentConfirmationForm from './PaymentConfirmationForm';
 import SearchBar from './SearchBar';
 import QuickFilters from './QuickFilters';
 import UserSidebar from './UserSidebar';
+import ProductDetailModal from './ProductDetailModal'; // Importar el modal de detalle
 
-const UserHome = ({ products, onLogin, currentUser, onLogout }) => {
+const UserHome = ({ products, onLogin, currentUser, onLogout, onUpdateUser }) => {
   const [cart, setCart] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false); // Para el formulario de envío original
-  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false); // Nuevo estado para el formulario de pago
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [notificationsCount, setNotificationsCount] = useState(3);
+  const [currentViewInHome, setCurrentViewInHome] = useState('catalog');
+  const [selectedProduct, setSelectedProduct] = useState(null); // Estado para el producto seleccionado
 
   useState(() => {
     setFilteredProducts(products);
@@ -44,21 +41,6 @@ const UserHome = ({ products, onLogin, currentUser, onLogout }) => {
       results = results.filter(p => p.category === category);
     } else {
       switch (filterType) {
-        case 'ofertas':
-          results = results.filter(p => p.price < 500);
-          break;
-        case 'mas_vendidos':
-          results = results.sort((a, b) => b.rating - a.rating);
-          break;
-        case 'novedades':
-          results = results.sort((a, b) => b.id - a.id);
-          break;
-        case 'envio_gratis':
-          results = results.filter(p => p.price > 100);
-          break;
-        case 'marcas_destacadas':
-          results = results.filter(p => p.category === 'Electrónica');
-          break;
         case 'all':
           results = products;
           break;
@@ -85,10 +67,8 @@ const UserHome = ({ products, onLogin, currentUser, onLogout }) => {
   const handleCheckout = () => {
     if (!currentUser) {
       alert('Por favor, inicia sesión o regístrate para continuar con la compra.');
-      setShowLoginModal(true);
       return;
     }
-    // Al hacer checkout, ahora vamos al formulario de confirmación de pago
     setShowPaymentConfirmation(true);
     setIsCartOpen(false);
   };
@@ -97,50 +77,139 @@ const UserHome = ({ products, onLogin, currentUser, onLogout }) => {
     alert('¡Información de pago y envío recibida! Tu pedido será validado pronto.');
     console.log('Datos de Pago:', paymentData);
     console.log('Datos de Envío:', shippingData);
-    setCart([]); // Vaciar carrito
-    setShowPaymentConfirmation(false); // Cerrar formulario
-  };
-
-  const handleOrderSubmit = (shippingInfo) => {
-    // Este handler ya no se usará directamente para el flujo principal de checkout
-    // pero se mantiene por si acaso.
-    alert(`¡Pedido confirmado! Se enviará a: ${shippingInfo.address}\nTotal: $${cart.reduce((sum, item) => sum + item.price, 0).toFixed(2)}`);
     setCart([]);
-    setShowCheckout(false);
-  };
-
-  const handleUserLogin = (user) => {
-    onLogin(user);
-    setShowLoginModal(false);
-    setShowRegisterModal(false);
-  };
-
-  const handleUserRegister = (user) => {
-    onLogin(user);
-    setShowLoginModal(false);
-    setShowRegisterModal(false);
+    setShowPaymentConfirmation(false);
+    setCurrentViewInHome('catalog');
   };
 
   const handleSidebarNavigation = (section) => {
     setIsSidebarOpen(false);
+    setCurrentViewInHome(section);
     if (section === 'favorites') {
       setFilteredProducts(favorites);
+    } else if (section === 'catalog') {
+      setFilteredProducts(products);
     } else {
       alert(`Navegando a: ${section}`);
-      setFilteredProducts(products);
+    }
+  };
+
+  const handleUpdateUserShipping = (shippingAddress) => {
+    const updatedUser = { ...currentUser, shippingAddress };
+    onUpdateUser(updatedUser);
+    alert('Dirección de envío actualizada.');
+  };
+
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
+  };
+
+  const renderUserHomeContent = () => {
+    if (showPaymentConfirmation) {
+      return (
+        <PaymentConfirmationForm 
+          onSubmit={handlePaymentConfirmationSubmit} 
+          onBack={() => setShowPaymentConfirmation(false)}
+        />
+      );
+    }
+
+    switch (currentViewInHome) {
+      case 'catalog':
+        return (
+          <>
+            <SearchBar products={products} onSearch={handleSearch} />
+            <QuickFilters products={products} onFilterChange={handleQuickFilter} />
+            <ProductGrid 
+              products={filteredProducts} 
+              onAddToCart={addToCart} 
+              onToggleFavorite={toggleFavorite} 
+              favorites={favorites}
+              onProductClick={handleProductClick} // Pasar la función para abrir el modal
+            />
+          </>
+        );
+      case 'favorites':
+        return (
+          <>
+            <h2 className="text-2xl font-bold mb-6">Mis Favoritos</h2>
+            {favorites.length > 0 ? (
+              <ProductGrid 
+                products={favorites} 
+                onAddToCart={addToCart} 
+                onToggleFavorite={toggleFavorite} 
+                favorites={favorites} 
+                onProductClick={handleProductClick}
+              />
+            ) : (
+              <p className="text-gray-600">Aún no tienes productos favoritos.</p>
+            )}
+          </>
+        );
+      case 'my_account':
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-2xl font-bold mb-6">Mi Cuenta</h2>
+            <h3 className="text-lg font-bold mb-2">Mis Datos Personales</h3>
+            <p className="text-sm text-gray-700">Nombre: {currentUser?.nombre} {currentUser?.apellido}</p>
+            <p className="text-sm text-gray-700">Correo: {currentUser?.correo}</p>
+            <p className="text-sm text-gray-700">Documento: {currentUser?.documento}</p>
+
+            <h3 className="text-lg font-bold mt-4 mb-2">Dirección de Envío Preestablecida</h3>
+            {currentUser?.shippingAddress ? (
+              <p className="text-sm text-gray-700">
+                {currentUser.shippingAddress.address}, {currentUser.shippingAddress.city}, {currentUser.shippingAddress.state}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500">No hay dirección preestablecida.</p>
+            )}
+            <button 
+              onClick={() => { /* Lógica para mostrar formulario de envío */ }}
+              className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+            >
+              {currentUser?.shippingAddress ? 'Modificar' : 'Establecer'}
+            </button>
+          </div>
+        );
+      case 'notifications':
+        return <h2 className="text-2xl font-bold mb-6">Mis Notificaciones (Simulado)</h2>;
+      case 'my_purchases':
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-2xl font-bold mb-6">Mis Compras</h2>
+            <p className="text-gray-600 mb-4">Aquí verás tu historial de compras y el estado de tus envíos.</p>
+            <p className="text-gray-500 text-sm">
+              (Funcionalidad de seguimiento de envíos y gestión de devoluciones requiere integración con servicios externos y backend.)
+            </p>
+          </div>
+        );
+      case 'help':
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-2xl font-bold mb-6">Ayuda y Soporte</h2>
+            <p className="text-gray-600 mb-4">Encuentra respuestas a tus preguntas frecuentes o contacta a nuestro equipo.</p>
+            <ul className="list-disc list-inside text-blue-600 space-y-2">
+              <li><a href="#" className="hover:underline">Preguntas Frecuentes (FAQs)</a></li>
+              <li><a href="#" className="hover:underline">Contactar Soporte (Chat en vivo simulado)</a></li>
+              <li><a href="#" className="hover:underline">Políticas de Devolución</a></li>
+            </ul>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Catálogo de Productos</h1>
-        <div className="flex items-center space-x-4">
+        <h1 className="text-2xl font-bold hidden sm:block">Catálogo de Productos</h1>
+        <div className="flex items-center space-x-2 sm:space-x-4 ml-auto">
           {/* Botón para abrir el sidebar */}
           {currentUser && (
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="flex items-center bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              className="flex items-center bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 text-sm"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -151,38 +220,18 @@ const UserHome = ({ products, onLogin, currentUser, onLogout }) => {
           {currentUser && (
             <button 
               onClick={() => setIsCartOpen(true)}
-              className="flex items-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="flex items-center bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 text-sm"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-5 h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              Carrito ({cart.length})
+              <span className="hidden sm:inline">Carrito</span> ({cart.length})
             </button>
           )}
         </div>
       </div>
 
-      <SearchBar products={products} onSearch={handleSearch} />
-      <QuickFilters products={products} onFilterChange={handleQuickFilter} />
-
-      {showPaymentConfirmation ? ( // Mostrar el nuevo formulario de confirmación de pago
-        <PaymentConfirmationForm 
-          onSubmit={handlePaymentConfirmationSubmit} 
-          onBack={() => setShowPaymentConfirmation(false)}
-        />
-      ) : showCheckout ? ( // Este es el formulario de envío original, ahora menos prioritario
-        <CheckoutForm 
-          onSubmit={handleOrderSubmit} 
-          onBack={() => setShowCheckout(false)}
-        />
-      ) : (
-        <ProductGrid 
-          products={filteredProducts} 
-          onAddToCart={addToCart} 
-          onToggleFavorite={toggleFavorite} 
-          favorites={favorites} 
-        />
-      )}
+      {renderUserHomeContent()}
 
       <CartSidebar
         cart={cart}
@@ -199,31 +248,21 @@ const UserHome = ({ products, onLogin, currentUser, onLogout }) => {
         onClose={() => setIsSidebarOpen(false)}
         onNavigate={handleSidebarNavigation}
         notificationsCount={notificationsCount}
+        currentUser={currentUser}
+        onUpdateUserShipping={handleUpdateUserShipping}
       />
 
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <UserLogin 
-            onLogin={handleUserLogin} 
-            onClose={() => setShowLoginModal(false)} 
-            onGoToRegister={() => { setShowLoginModal(false); setShowRegisterModal(true); }} 
-          />
-        </div>
-      )}
-
-      {showRegisterModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <UserRegister 
-            onRegister={handleUserRegister} 
-            onClose={() => setShowRegisterModal(false)} 
-            onGoToLogin={() => { setShowRegisterModal(false); setShowLoginModal(true); }} 
-          />
-        </div>
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={addToCart}
+          onToggleFavorite={toggleFavorite}
+          isFavorite={favorites.some(fav => fav.id === selectedProduct.id)}
+        />
       )}
     </div>
   );
 };
 
 export default UserHome;
-
-// DONE

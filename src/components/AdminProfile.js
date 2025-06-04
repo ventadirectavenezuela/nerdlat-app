@@ -33,106 +33,108 @@ const AdminProfile = ({ admin, onUpdate, onLogout }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">Perfil de Administrador</h2>
-        {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Editar Perfil
-          </button>
-        ) : (
-          <button
-            onClick={() => {
-              setIsEditing(false);
-              setFormData({ ...admin });
-            }}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-          >
-            Cancelar
-          </button>
-        )}
+    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md"> {/* Ajustado padding para móviles */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6"> {/* Ajustado para apilar en móviles */}
+        <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0">Perfil de Administrador</h2> {/* Ajustado tamaño de texto para móviles */}
+        <div className="flex space-x-2"> {/* Añadido contenedor para botones */}
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 text-sm" // Ajustado padding y tamaño de texto para móviles
+            >
+              Editar Perfil
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setFormData({ ...admin });
+              }}
+              className="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 text-sm"
+            >
+              Cancelar
+            </button>
+          )}
+        </div>
       </div>
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {error && <p className="text-red-500 mb-3 sm:mb-4 text-sm">{error}</p>} {/* Ajustado margen y tamaño de texto para móviles */}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4"> {/* Ajustado espacio para móviles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4"> {/* Ajustado gap para móviles */}
           <div>
-            <label className="block text-gray-700 mb-1">Usuario*</label>
+            <label className="block text-gray-700 mb-1 text-sm">Usuario*</label> {/* Ajustado tamaño de texto para móviles */}
             <input
               type="text"
               name="usuario"
               value={formData.usuario}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded text-sm" // Ajustado padding y tamaño de texto para móviles
               required
               disabled={!isEditing}
             />
           </div>
           <div>
-            <label className="block text-gray-700 mb-1">Correo Electrónico*</label>
+            <label className="block text-gray-700 mb-1 text-sm">Correo Electrónico*</label>
             <input
               type="email"
               name="correo"
               value={formData.correo}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded text-sm"
               required
               disabled={!isEditing}
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <label className="block text-gray-700 mb-1">Nombre*</label>
+            <label className="block text-gray-700 mb-1 text-sm">Nombre*</label>
             <input
               type="text"
               name="nombre"
               value={formData.nombre}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded text-sm"
               required
               disabled={!isEditing}
             />
           </div>
           <div>
-            <label className="block text-gray-700 mb-1">Apellido</label>
+            <label className="block text-gray-700 mb-1 text-sm">Apellido</label>
             <input
               type="text"
               name="apellido"
               value={formData.apellido}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded text-sm"
               disabled={!isEditing}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-gray-700 mb-1">Documento</label>
+          <label className="block text-gray-700 mb-1 text-sm">Documento</label>
           <input
             type="text"
             name="documento"
             value={formData.documento}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded"
+            className="w-full p-2 border border-gray-300 rounded text-sm"
             disabled={!isEditing}
           />
         </div>
 
         {isEditing && (
           <div>
-            <label className="block text-gray-700 mb-1">Nueva Contraseña</label>
+            <label className="block text-gray-700 mb-1 text-sm">Nueva Contraseña</label>
             <input
               type="password"
               name="contraseña"
               value={formData.contraseña || ''}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded text-sm"
               placeholder="Dejar en blanco para no cambiar"
             />
             <p className="text-xs text-gray-500 mt-1">Mínimo 8 caracteres</p>
@@ -143,7 +145,7 @@ const AdminProfile = ({ admin, onUpdate, onLogout }) => {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm"
             >
               Guardar Cambios
             </button>
@@ -151,10 +153,10 @@ const AdminProfile = ({ admin, onUpdate, onLogout }) => {
         )}
       </form>
 
-      <div className="mt-8 pt-4 border-t">
+      <div className="mt-6 sm:mt-8 pt-3 sm:pt-4 border-t"> {/* Ajustado margen y padding para móviles */}
         <button
           onClick={onLogout}
-          className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          className="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 text-sm"
         >
           Cerrar Sesión
         </button>
