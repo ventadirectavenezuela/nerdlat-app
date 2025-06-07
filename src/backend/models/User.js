@@ -5,7 +5,8 @@ const jwt = require('jsonwebtoken');
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, trim: true },
     email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, minlength: 6 }
+    password: { type: String, required: true, minlength: 6 },
+    document: { type: String, required: false, unique: false, trim: true } // <-- ¡Campo 'document' añadido aquí!
 }, { timestamps: true });
 
 // Hash password before saving
@@ -29,7 +30,7 @@ userSchema.methods.comparePassword = function(candidatePassword) {
 userSchema.methods.generateJWT = function() {
     return jwt.sign(
         { id: this._id, username: this.username },
-        process.env.JWT_SECRET || 'your_jwt_secret',
+        process.env.JWT_SECRET || 'your_jwt_secret', // Asegúrate de tener JWT_SECRET en tu .env o cámbialo
         { expiresIn: '1d' }
     );
 };

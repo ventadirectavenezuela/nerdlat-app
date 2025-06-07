@@ -22,7 +22,8 @@ const UserLogin = ({ onLogin, onClose, onGoToRegister, onForgotPassword }) => {
 
     try {
       // Petición al backend para iniciar sesión
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      // CAMBIO AQUÍ: La URL debe apuntar al puerto 5000 del backend
+      const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

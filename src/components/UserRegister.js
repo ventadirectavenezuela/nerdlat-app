@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// No necesitamos initialUsers aquí, la autenticación la hará el backend
 import Auth from '../utils/auth';
 
 const UserRegister = ({ onRegister, onClose, onGoToLogin }) => {
@@ -10,49 +9,68 @@ const UserRegister = ({ onRegister, onClose, onGoToLogin }) => {
     password: ''
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false); // Estado de carga
+  const [loading, setLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState(''); // CAMBIO AQUÍ: Estado para el error de la contraseña
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // CAMBIO AQUÍ: Validación en tiempo real para la contraseña
+    if (name === 'password') {
+      if (value.length < 6 && value.length > 0) { // Si la longitud es menor a 6 y no está vacío
+        setPasswordError('La contraseña debe tener al menos 6 caracteres.');
+      } else {
+        setPasswordError(''); // Limpiar el error si cumple o está vacío
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true); // Iniciar carga
+    setPasswordError(''); // Limpiar cualquier error de contraseña al intentar enviar
+    setLoading(true);
+
+    // CAMBIO AQUÍ: Añadir una validación básica antes de enviar
+    if (formData.password.length < 6) {
+      setPasswordError('La contraseña es demasiado corta. Debe tener al menos 6 caracteres.');
+      setLoading(false);
+      return; // Detener el envío del formulario
+    }
 
     try {
-      // Petición al backend para registrar un nuevo usuario
-      const response = await fetch('http://localhost:3000/api/auth/register', {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // El backend espera email, password, name. El documento se puede añadir al modelo si es necesario.
-        body: JSON.stringify({ 
-          email: formData.email, 
-          password: formData.password, 
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
           name: formData.name,
-          // Puedes añadir el documento aquí si el backend lo espera:
-          // document: formData.document 
+          document: formData.document // Asegúrate de que esto esté descomentado para enviarlo al backend
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Si el registro es exitoso, iniciar sesión automáticamente
-        Auth.login(data.user, data.token || Auth.generateToken(data.user.id)); // Usar token del backend o generar uno si no viene
-        onRegister(data.user); // Notificar a App.js
+        Auth.login(data.user, data.token || Auth.generateToken(data.user.id));
+        onRegister(data.user);
       } else {
-        setError(data.message || 'Error al registrarse. Inténtalo de nuevo.');
+        // CAMBIO AQUÍ: Si el backend devuelve un error específico, mostrarlo
+        if (data.details && data.details.includes('password') && data.details.includes('shorter')) {
+            setPasswordError('La contraseña debe tener al menos 6 caracteres.');
+        } else {
+            setError(data.message || 'Error al registrarse. Inténtalo de nuevo.');
+        }
       }
     } catch (err) {
       setError('No se pudo conectar con el servidor. Inténtalo más tarde.');
       console.error('Error de conexión:', err);
     } finally {
-      setLoading(false); // Finalizar carga
+      setLoading(false);
     }
   };
 
@@ -106,13 +124,15 @@ const UserRegister = ({ onRegister, onClose, onGoToLogin }) => {
             name="password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded text-sm"
+            className={`w-full p-2 border rounded text-sm ${passwordError ? 'border-red-500' : 'border-gray-300'}`} // CAMBIO AQUÍ: Resaltar borde
             required
           />
+          {/* CAMBIO AQUÍ: Mostrar mensaje de error */}
+          {passwordError && <p className="text-red-500 text-xs mt-1">{passwordError}</p>}
         </div>
         <button
           type="submit"
-          disabled={loading} // Deshabilitar botón durante la carga
+          disabled={loading}
           className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
         >
           {loading ? 'Registrando...' : 'Registrarse'}

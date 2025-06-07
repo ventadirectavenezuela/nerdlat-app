@@ -10,7 +10,14 @@ const app = express();
 
 // Middleware
 app.use(express.json()); // Para parsear el cuerpo de las solicitudes JSON
-app.use(cors()); // Habilitar CORS para todas las solicitudes
+
+// Configuración de CORS para permitir peticiones desde tu frontend
+app.use(cors({
+    origin: 'http://localhost:3000', // Permite solo peticiones desde tu frontend React
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Habilita el envío de cookies o encabezados de autorización (si los usas)
+    optionsSuccessStatus: 204
+}));
 
 // Conexión a la base de datos MongoDB
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/your_database_name')

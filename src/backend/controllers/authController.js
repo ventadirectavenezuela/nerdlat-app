@@ -6,9 +6,11 @@ const User = require('../models/User'); // Importa el modelo de usuario
 // Registro de usuario
 exports.register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        // CAMBIO AQUÍ: Desestructurar 'name', 'email', 'password' y 'document'
+        // 'name' del frontend se usará para 'username' en el backend
+        const { name, email, password, document } = req.body;
 
-        // Verificar si el usuario ya existe por email (el username no es único en el esquema actual)
+        // Verificar si el email ya está registrado
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: 'El email ya está registrado.' });
@@ -16,20 +18,31 @@ exports.register = async (req, res) => {
 
         // Crear nuevo usuario. La contraseña será hasheada automáticamente por el hook pre('save') en el modelo User.
         const user = new User({
-            username,
+            username: name, // Usar 'name' del frontend como 'username' del backend
             email,
             password, // Pasa la contraseña en texto plano, el hook pre('save') la hasheará
+            document, // Incluir el campo 'document' si existe en tu modelo User
         });
 
         await user.save(); // Guarda el usuario, disparando el hook pre('save')
 
-        res.status(201).json({ message: 'Usuario registrado exitosamente.' });
+        // Incluir algunos datos del usuario en la respuesta para el frontend
+        res.status(201).json({ 
+            message: 'Usuario registrado exitosamente.', 
+            user: { 
+                id: user._id, 
+                username: user.username, 
+                email: user.email,
+                // Puedes añadir el documento aquí si lo quieres en la respuesta:
+                // document: user.document 
+            } 
+        });
     } catch (error) {
-        // Manejo de errores detallado
+        console.error('Error durante el registro:', error); // Log del error completo para depuración
         if (error.code === 11000) { // Código de error de duplicado de MongoDB
             return res.status(400).json({ message: 'El usuario o email ya existe. Intenta con otro.' });
         }
-        res.status(500).json({ message: 'Error en el registro del usuario.', error: error.message });
+        res.status(500).json({ message: 'Error en el registro del usuario.', details: error.message });
     }
 };
 

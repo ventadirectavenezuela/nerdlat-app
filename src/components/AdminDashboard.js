@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import AdminProductForm from './AdminProductForm';
-import ProductGrid from './ProductGrid';
-import AdminProfile from './AdminProfile';
-import AdminStats from './AdminStats';
+import AdminProductForm from '../components/AdminProductForm';
+import ProductGrid from '../components/ProductGrid';
+import AdminStats from '../components/AdminStats';
+import AdminProfile from '../components/AdminProfile';
 
 const AdminDashboard = ({ 
   admin,
   onUpdateAdmin,
   onLogout 
 }) => {
-  const [products, setProducts] = useState([]); // Ahora los productos se gestionan desde aquí
+  const [products, setProducts] = useState([]);
   const [isEditing, setIsEditing] = useState(null);
   const [activeTab, setActiveTab] = useState('products');
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -21,7 +21,8 @@ const AdminDashboard = ({
       setLoadingProducts(true);
       setErrorProducts('');
       try {
-        const response = await fetch('http://localhost:3000/api/products');
+        // CAMBIO: Asegúrate de que la URL apunte al puerto 5000 del backend
+        const response = await fetch('http://localhost:5000/api/products');
         const data = await response.json();
         if (response.ok) {
           setProducts(data);
@@ -36,11 +37,12 @@ const AdminDashboard = ({
       }
     };
     fetchProducts();
-  }, []); // Se ejecuta solo una vez al montar
+  }, []);
 
   const handleAddProduct = async (newProduct) => {
     try {
-      const response = await fetch('http://localhost:3000/api/products', {
+      // CAMBIO: Asegúrate de que la URL apunte al puerto 5000 del backend
+      const response = await fetch('http://localhost:5000/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +52,7 @@ const AdminDashboard = ({
       });
       const data = await response.json();
       if (response.ok) {
-        setProducts(prev => [...prev, data.product]); // Añadir el producto devuelto por el backend
+        setProducts(prev => [...prev, data.product]);
         alert('Producto agregado exitosamente!');
       } else {
         alert(`Error al agregar producto: ${data.message || 'Desconocido'}`);
@@ -63,7 +65,8 @@ const AdminDashboard = ({
 
   const handleUpdateProduct = async (updatedProduct) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/products/${updatedProduct.id}`, {
+      // CAMBIO: Asegúrate de que la URL apunte al puerto 5000 del backend
+      const response = await fetch(`http://localhost:5000/api/products/${updatedProduct.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +76,7 @@ const AdminDashboard = ({
       });
       const data = await response.json();
       if (response.ok) {
-        setProducts(prev => prev.map(p => p.id === updatedProduct.id ? data.product : p)); // Actualizar el producto
+        setProducts(prev => prev.map(p => p.id === updatedProduct.id ? data.product : p));
         alert('Producto actualizado exitosamente!');
       } else {
         alert(`Error al actualizar producto: ${data.message || 'Desconocido'}`);
@@ -89,14 +92,15 @@ const AdminDashboard = ({
       return;
     }
     try {
-      const response = await fetch(`http://localhost:3000/api/products/${productId}`, {
+      // CAMBIO: Asegúrate de que la URL apunte al puerto 5000 del backend
+      const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
         method: 'DELETE',
         headers: {
           // 'Authorization': `Bearer ${Auth.getToken()}`
         },
       });
       if (response.ok) {
-        setProducts(prev => prev.filter(p => p.id !== productId)); // Eliminar de la lista
+        setProducts(prev => prev.filter(p => p.id !== productId));
         alert('Producto eliminado exitosamente!');
       } else {
         const data = await response.json();
@@ -170,7 +174,7 @@ const AdminDashboard = ({
                   </h2>
                   <AdminProductForm
                     product={isEditing}
-                    onSubmit={isEditing ? handleSubmitEdit : handleAddProduct} // Usar handleAddProduct
+                    onSubmit={isEditing ? handleSubmitEdit : handleAddProduct}
                     onCancel={isEditing ? handleCancelEdit : null}
                   />
                 </div>
@@ -188,7 +192,7 @@ const AdminDashboard = ({
                       products={products}
                       showActions
                       onEdit={handleEdit}
-                      onDelete={handleDeleteProduct} // Usar handleDeleteProduct
+                      onDelete={handleDeleteProduct}
                     />
                   )}
                 </div>
